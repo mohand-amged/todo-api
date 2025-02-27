@@ -1,14 +1,19 @@
 const mongoose = require('mongoose');
 const todo = require('../models/todo.model');
+const httpStatusText = require('../utils/httpStatusText');
 
 // Get all todos
 
 const getAllTodos = async (req, res) => {
     try {
-        const todos = await todo.find();
-        return res.status(200).json(todos);
+        const query = req.query;
+        const limit = query.limit || 10;
+        const page = query.page || 1;
+        const skip = (page - 1) * limit
+        const todos = await todo.find({}, {"__v" : false}).limit(limit).skip(skip);
+        return res.status(200).json({  status: httpStatusText.SUCCESS, data: {todos} });
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return res.status(500).json({ status : httpStatusText.ERROR, data : null, message: error.message, code : 500  });
     }
 };
 
@@ -21,7 +26,7 @@ const createTodo = async (req, res) => {
         const newTodo = await todo.insertOne({ title, completed: false });
         return res.status(201).json(newTodo);
     } catch (error) {
-        return res.status(400).json({ message: error.message });
+        return res.status(400).json({ status : httpStatusText.ERROR, data : null, message: error.message, code : 400 });
     }
 };
 
@@ -31,7 +36,7 @@ const updateTodo = async (req, res) => {
       const { id } = req.params;
       const { title, completed } = req.body;
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(404).send(`No todo with id: ${id}`);
+        return res.status(404).send({status: httpStatusText.FAIL , massage : `No todo with id: ${id}`});
       }
       const updatedDoc = await todo.findByIdAndUpdate(
         id,
@@ -39,11 +44,11 @@ const updateTodo = async (req, res) => {
         { new: true }
       );
       if (!updatedDoc) { // Check if document exists
-        return res.status(404).json({ message: "Todo not found" });
+        return res.status(404).json({ status : httpStatusText.FAIL , message: "Todo not found" });
       }
       res.json(updatedDoc);
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      return res.status(500).json({ status : httpStatusText.ERROR, data : null, message: error.message, code : 500 });
     }
   };
   
@@ -56,11 +61,11 @@ const updateTodo = async (req, res) => {
       }
       const deletedTodo = await todo.findByIdAndDelete(id);
       if (!deletedTodo) { // Check if document was found and deleted
-        return res.status(404).json({ message: "Todo not found" });
+        return res.status(404).json({ status : httpStatusText.ERROR , message: null });
       }
-      res.json({ message: "Todo deleted successfully." });
+      res.json({status : httpStatusText.SUCCESS , data : null });
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      return res.status(500).json({ status : httpStatusText.ERROR, data : null, message: error.message, code : 500 });
     }
   };
 
