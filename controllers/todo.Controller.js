@@ -23,7 +23,7 @@ const createTodo = async (req, res) => {
 
     try {
         const { title } = req.body;
-        const newTodo = await todo.insertOne({ title, completed: false });
+        const newTodo = await todo.create({ title, completed: false });
         return res.status(201).json(newTodo);
     } catch (error) {
         return res.status(400).json({ status : httpStatusText.ERROR, data : null, message: error.message, code : 400 });
