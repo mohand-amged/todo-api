@@ -57,7 +57,7 @@ const updateTodo = async (req, res) => {
     try {
       const { id } = req.params;
       if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(404).send(`No todo with id: ${id}`);
+        return res.status(404).send({status : httpStatusText.FAIL, massage : `No todo with id: ${id}`});
       }
       const deletedTodo = await todo.findByIdAndDelete(id);
       if (!deletedTodo) { // Check if document was found and deleted
